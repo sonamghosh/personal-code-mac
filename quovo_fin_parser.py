@@ -17,8 +17,8 @@ import re
 def parse_doc(ticker=None, cik=None, prior_to=None, count=100):
     # Find CIK if given only ticker since needed for query
     if ticker != None and cik == None:
+        valid = ticker_validity_checker(ticker)  # Checks if ticker is valid, raises error if not valid
         cik = get_cik(ticker)
-
     # Creates diredtory to store information in
     try:
         make_dir(cik, prior_to)
@@ -101,6 +101,17 @@ def get_cik(ticker):
         found = search_string.group(1)
 
     return found
+
+def ticker_validity_checker(ticker):
+    # Open CSV file with mutual fund tickers into pandas dataframe
+    data = pd.read_csv('mutual_fund_ticker_list.csv')
+    # Check efficiently by seeing if the ticker exists in the ticker column parsed into a Set object
+    valid = ticker in set(data.Ticker)
+    if not valid:
+        raise ValueError('This is not a valid ticker: ', ticker)
+    else:
+        return True
+
 
 
 def make_dir(cik, prior_to):
