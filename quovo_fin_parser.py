@@ -1,17 +1,17 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import os
 import requests
 import csv
 import datetime
-import logging
 import sys
 from bs4 import BeautifulSoup
 import errno
 from itertools import repeat
 from requests_html import HTMLSession
 import re
+import xmltodict
+import xml.etree.ElementTree as et
 
 
 def parse_doc(ticker=None, cik=None, prior_to=None, count=100):
@@ -79,15 +79,6 @@ def create_document_list(data):
 
     return doc_list, doc_name_list
 
-def get_url(url):
-    if sys.version_info[0] >= 3:
-        import urllib.request 
-        content = urllib.request.urlopen(url).read()
-    else:
-        import urllib2
-        content = urllib2.urlopen(url).read()
-
-    return content
 
 def get_cik(ticker):
     session = HTMLSession()
@@ -102,6 +93,7 @@ def get_cik(ticker):
 
     return found
 
+
 def ticker_validity_checker(ticker):
     # Open CSV file with mutual fund tickers into pandas dataframe
     data = pd.read_csv('mutual_fund_ticker_list.csv')
@@ -111,7 +103,6 @@ def ticker_validity_checker(ticker):
         raise ValueError('This is not a valid ticker: ', ticker)
     else:
         return True
-
 
 
 def make_dir(cik, prior_to):
@@ -163,6 +154,17 @@ def save_to_tsv(cik, doc_list, doc_name_list):
                 if count > 0:
                     csvout.writerows(repeat(row[2:4], count))
         """
+
+def xml_to_pd():
+    # Modify function later, this is a test one
+    # Load XML 
+    e = et.parse('primary_doc.xml').getroot()
+    # Convert to string
+    xmlstr = et.tostring(e, encoding='ascii', method='xml')
+    # Convert xml str to dict and dump into json
+    print(json.dumps(xmltodict.parse(xmlstr), indent=4))
+    
+
 
 
 if __name__ == "__main__":
