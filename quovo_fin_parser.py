@@ -101,9 +101,10 @@ def make_dir(cik, prior_to):
     # Get current directory
     current_dir = os.getcwd()
     final_dir = os.path.join(current_dir, r'SEC-Edgar-Data')
+
     # Make dir to save company filings
+    path = os.path.join(final_dir, cik)
     print('Path ==== ', path)
-    
     if not os.path.exists(path):
         try:
             os.makedirs(path)
@@ -114,8 +115,11 @@ def make_dir(cik, prior_to):
 
 
 def save_to_dir(cik, prior_to, doc_list, doc_name_list):
+    """
     default_data_path = os.path.abspath(os.path.join(
                         os.path.dirname(__file__), '..', 'SEC-Edgar-Data'))
+    """
+    default_data_path = os.path.join(os.getcwd(), 'SEC-Edgar-Data')
     # Save every text document into its respective folder
     for i in range(len(doc_list)):
         base_url = doc_list[i]
