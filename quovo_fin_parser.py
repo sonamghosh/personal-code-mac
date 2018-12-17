@@ -98,18 +98,19 @@ def get_url(url):
 
 
 def make_dir(cik, prior_to):
-    default_data_path = os.path.abspath(os.path.join(
-                        os.path.dirname(__file__), '..', 'SEC-Edgar-Data'))
+    # Get current directory
+    current_dir = os.getcwd()
+    final_dir = os.path.join(current_dir, r'SEC-Edgar-Data')
     # Make dir to save company filings
-    path = os.path.join(default_data_path, cik)
     print('Path ==== ', path)
+    
     if not os.path.exists(path):
         try:
             os.makedirs(path)
         except OSError as exception:
             if exception.errno != errno.EEXIST:
                 raise
-
+    
 
 
 def save_to_dir(cik, prior_to, doc_list, doc_name_list):
@@ -127,5 +128,6 @@ def save_to_dir(cik, prior_to, doc_list, doc_name_list):
 
 
 if __name__ == "__main__":
-    parse_doc(ticker='AAPL', cik='0000320193')
+    #parse_doc(ticker='AAPL', cik='0000320193')
     #parse_doc(ticker='BillBoi', cik='0001166559')
+    make_dir('00023232', prior_to='20180509')
