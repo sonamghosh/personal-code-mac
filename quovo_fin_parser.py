@@ -9,24 +9,17 @@ import logging
 import sys
 from bs4 import BeautifulSoup
 import errno
-
-
+from itertools import repeat
+from requests_html import HTMLSession
+import re
 
 
 def parse_doc(ticker=None, cik=None, prior_to=None, count=100):
-    edgar_prefix = 'https://www.sec.gov/Archives/'
-    if ticker == None and cik != None:
-        # Add Find CIK function here
-        print('babababa')
-    elif ticker != None and cik == None:
-        # Add Find Ticker function here
-        print('Camels')
-    elif ticker == None and cik == None:
-        print('Bad boi')
-    else:
-        # Add Validity Checker uwu :3
-        print('hello worldx')
+    # Find CIK if given only ticker since needed for query
+    if ticker != None and cik == None:
+        cik = get_cik(ticker)
 
+    # Creates diredtory to store information in
     try:
         make_dir(cik, prior_to)
     except Exception as e:
@@ -48,6 +41,7 @@ def parse_doc(ticker=None, cik=None, prior_to=None, count=100):
 
     try:
         save_to_dir(cik, prior_to, doc_list, doc_name_list)
+        #save_to_tsv(cik, doc_list, doc_name_list)
     except Exception as e:
         print(str(e))
 
@@ -95,6 +89,18 @@ def get_url(url):
 
     return content
 
+def get_cik(ticker):
+    session = HTMLSession()
+    url = 'https://www.sec.gov/cgi-bin/series?ticker='+ticker+'&CIK=&sc=companyseries&type=N-PX&Find=Search'
+    r = session.get(url)
+    links = list(r.html.absolute_links)
+    ticker_link = links[-3]  # Last two links in the Set are irrelevant, 2nd last one contains one corresponding to ticker
+    # Extract the CIK
+    search_string = re.search('CIK=(.+?)&action', ticker_link)
+    if search_string:
+        found = search_string.group(1)
+
+    return found
 
 
 def make_dir(cik, prior_to):
@@ -115,10 +121,6 @@ def make_dir(cik, prior_to):
 
 
 def save_to_dir(cik, prior_to, doc_list, doc_name_list):
-    """
-    default_data_path = os.path.abspath(os.path.join(
-                        os.path.dirname(__file__), '..', 'SEC-Edgar-Data'))
-    """
     default_data_path = os.path.join(os.getcwd(), 'SEC-Edgar-Data')
     # Save every text document into its respective folder
     for i in range(len(doc_list)):
@@ -131,7 +133,29 @@ def save_to_dir(cik, prior_to, doc_list, doc_name_list):
             f.write(data.encode('ascii', 'ignore'))
 
 
+def save_to_tsv(cik, doc_list, doc_name_list):
+    default_data_path = os.path.join(os.getcwd(), 'SEC-Edgar-Data')
+    # Turn txt docs into tsv files
+    for i in range(len(doc_list)):
+        path = os.path.join(default_data_path, cik, doc_name_list[i])
+        name = os.path.splitext(path)[0]+'.tsv'
+
+        with open(name, 'wt') as outfile:
+            tsv_writer = csv.writer(outfile, delimiter='\t')
+        """
+        with open(path, 'rb') as tsvin, open(name, 'wb') as csvout:
+            tsvin = csv.reader(tsvin, delimiter='\t')
+            csvout = csv.writer(csvout)
+
+            for row in tsvin:
+                count = int(row[4])
+                if count > 0:
+                    csvout.writerows(repeat(row[2:4], count))
+        """
+
+
 if __name__ == "__main__":
-    #parse_doc(ticker='AAPL', cik='0000320193')
-    #parse_doc(ticker='BillBoi', cik='0001166559')
-    make_dir('00023232', prior_to='20180509')
+    #parse_doc(ticker='AAPL', cik='0000320193', count=20)
+    #parse_doc(ticker='AMD', cik='0000002488', count=20)
+    parse_doc(ticker='BillBoi', cik='0001166559', prior_to='20021217')
+    #make_dir('00023232', prior_to='20180509')
