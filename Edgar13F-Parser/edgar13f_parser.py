@@ -1,5 +1,3 @@
-# Modifying existing code above
-
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup, SoupStrainer
 import requests
@@ -11,9 +9,6 @@ import os
 
 
 class EdgarParser:
-    base_url = 'https://www.sec.gov'
-    latest_form_query = '/cgi-bin/browse-edgar?action=getcompany&CIK={}'
-
     def __init__(self, cik=None, ticker=None):
         if cik:
             self.cik = cik
@@ -64,14 +59,14 @@ class EdgarParser:
         url = urljoin(self.base_url, self.latest_form_url)
 
         # grab the most recent form
-        parse = SoupStrainer('a', {'id': 'documentsbutton'})
+        parse_only = SoupStrainer('a', {'id': 'documentsbutton'})
         soup = BeautifulSoup(self.session.get(url).content, 'lxml',
                              parse_only=parse_only)
         recent_form_url = soup.find('a', {'id': 'documentsbutton'})['href']
         recent_form_url = urljoin(self.base_url, recent_form_url)
 
         # grab document url for the form
-        parse = SoupStrainer('tr', {'class': 'blueRow'})
+        parse_only = SoupStrainer('tr', {'class': 'blueRow'})
         soup = BeautifulSoup(self.session.get(recent_form_url).content, 'lxml',
                              parse_only=parse_only)
         form_url = soup.find_all('tr', {'class': 'blueRow'})[-1].find('a')['href']
@@ -88,9 +83,13 @@ class EdgarParser:
             print('No holdings at: {}'.format(url))
             return
 
-        return Holdings
+        return holdings
 
 
 # Testing
 if __name__ == "__main__":
     print('Hello World')
+    test = EdgarParser(cik='0001166559')
+    a = test.parse_recent_doc(cik='0001166559')
+    print(a)
+    print(type(a))
