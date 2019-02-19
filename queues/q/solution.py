@@ -6,34 +6,6 @@ import base64
 from collections import OrderedDict
 from operator import itemgetter
 
-# Testing Transformations first
-s1 = "Qadium, Inc."
-
-if "Qadium" in s1:
-    print('yes')
-    s2 = s1[::-1]  # reverses the string
-print(s2)
-
-num = 512
-print(~512)  # bitwise not
-
-s2 = "Hello uwu"
-#s2 = codecs.encode(s2, encoding='utf-8')
-s2 = s2.encode('utf-8')
-s2 = base64.encodebytes(s2)
-s2h = hashlib.sha256(s2).hexdigest()  # hash
-print(s2h)
-# Transformation rules ignore values of private fields ones with _
-
-
-# Dispatch Rules
-# _special -> queue 0
-# _hash -> 1
-# value with muidaQ -> 2
-# int val -> 3
-# Else 4
-# Ignore private field values with underscore _
-
 class MessageService:
     def __init__(self):
         # Hold the name of the sequence and queue for the msgs
@@ -98,8 +70,11 @@ class MessageService:
         Field with a integer value -> Queue 3
         Otherwise -> Queue 4
 
+        @param msg (dict) - Message dictionary with the field and value information
+
         Note: Ignore values of private fields (starts with '_')
         """
+
         if '_special' in msg:
             return 0
         elif 'hash' in msg:
@@ -108,7 +83,7 @@ class MessageService:
             for field, val in msg.items():
                 # Ignore values with private fields
                 if not field.startswith("_"):
-                    if 'muidaQ' in val:
+                    if isinstance(val, str) and 'muidaQ' in val:
                         return 2
                     elif isinstance(val, int):
                         return 3
