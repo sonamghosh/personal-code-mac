@@ -16,8 +16,7 @@ class MessageService:
         self.msg_queues = [queue.Queue() for i in range(5)]
 
 
-    @staticmethod
-    def encode_str(val):
+    def encode_str(self, val):
         """
         @brief - Base64 utf-8 Sha256 encodes a string value
 
@@ -30,8 +29,8 @@ class MessageService:
         hashed_str = hashlib.sha256(utf8_base64_encoded).hexdigest()
         return hashed_str
 
-    @staticmethod
-    def transform(msg):
+
+    def transform(self, msg):
         """
         @brief Follows the transformation rules for dealing with a msg
         dictionary in the queues. Rules are applied in order.
@@ -50,16 +49,16 @@ class MessageService:
                     msg[field] = ~val
             # Use the @m encode_str method to generate a 'hash' field with encoded value
             if '_hash' in field:
-                enc_val = encode_str(val)
+                enc_val = self.encode_str(val)
                 # Throw exception if hash exists already and the value is different from the hashed value from before
-                if 'hash' in field and msg['hash'] != enc_val:
-                    raise Exception('Hash values are different')
-                msg['hash'] = encode_str
+                if field == 'hash':
+                    if msg['hash'] != enc_val:
+                        raise Exception('Hash values are different')
+                msg['hash'] = enc_val
 
         return msg
 
-    @staticmethod
-    def dispatch(msg):
+    def dispatch(self, msg):
         """
         @brief Given five output queues 0 to 4, this method decides which queue
         gets a msg based on various rules followed in order.
@@ -128,7 +127,6 @@ class MessageService:
         msg = json.loads(msg, object_pairs_hook=OrderedDict)
         # Apply transformation rules
         transformed_msg = self.transform(msg)
-
         if '_sequence' in transformed_msg:
             self.enqueue_sequence(transformed_msg)
         else:
