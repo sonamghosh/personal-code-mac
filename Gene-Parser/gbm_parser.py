@@ -48,18 +48,22 @@ print(not_nan_nums)
 print(100 - nan_nums/len(d_list) * 100)
 
 
-def parse_mutation_data(gene):
+def parse_genomic_data(gene, genetic_profile_id):
     """
     insert documentation here
     Poggers
 
     note:
-    consider adding more params for genetic_profile_id
+    consider adding more params for
     and case_set_id
+
+    Known profile ids:
+    gbm_tcga_mutations
+    gbm_tcga_gistic
     """
     # Link to query
     url = 'http://www.cbioportal.org/webservice.do?'+\
-          'cmd=getProfileData&genetic_profile_id=gbm_tcga_mutations'+\
+          'cmd=getProfileData&genetic_profile_id='+genetic_profile_id+\
           '&id_type=gene_symbol&gene_list='+gene+'&case_set_id=gbm_tcga_cnaseq'
     # Send Request to Database
     req = requests.get(url)
@@ -72,10 +76,9 @@ def parse_mutation_data(gene):
     # Get Rid of first value which is a blank
     data_list.pop(0)  # TODO: Consider removing any potential blanks(?)
     # Get rid of \n in elements
-    for i in range(len(data_list)):
-        if data_list[i].endswith("\n"):
-            # Remove \n and update entry
-            data_list[i] = data_list[i][:-1]  # TODO: Check if this only happens on the last elem and avoid loop
+    if data_list[-1].endswith("\n"):
+        # Remove \n and update entry
+        data_list[-1] = data_list[-1][:-1]
 
     return data_list
 
@@ -101,5 +104,7 @@ print(alter_nums/len(d2_list) * 100)
 print(len(d2_list), len(d_list))
 print((round(not_nan_nums) + round(alter_nums))/(len(d2_list)) * 100)
 
-#pretty_json = json.loads(req2.text)
-#print(json.dumps(pretty_json, indent=2))
+g1 = 'TP53'
+g2 = 'gbm_tcga_mutations'
+out = parse_genomic_data(g1,g2)
+print(out)
