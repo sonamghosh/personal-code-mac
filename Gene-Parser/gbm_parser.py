@@ -42,7 +42,9 @@ for i in range(len(d_list)):
 print(len(d_list))
 print(d_list)
 nan_nums = d_list.count('NaN')
+not_nan_nums = len(d_list) - nan_nums
 print(nan_nums)
+print(not_nan_nums)
 print(100 - nan_nums/len(d_list) * 100)
 
 
@@ -68,7 +70,7 @@ def parse_mutation_data(gene):
     # Turn string into a list by looking for tab deliminator
     data_list = data.split("\t")
     # Get Rid of first value which is a blank
-    data_list = data_list.pop(0)  # TODO: Consider removing any potential blanks(?)
+    data_list.pop(0)  # TODO: Consider removing any potential blanks(?)
     # Get rid of \n in elements
     for i in range(len(data_list)):
         if data_list[i].endswith("\n"):
@@ -83,7 +85,21 @@ def parse_mutation_data(gene):
 #print(req1.content)
 #rawData = pd.read_csv(req1.text, encoding='ISO-8859-1', dtype=object)
 #rint(rawData)
-#req2 = requests.get(url2)
+req2 = requests.get(url2)
 #print(req2.text)
+d2 = req2.text
+d2 = d2.split('TP53', 1)[1]
+d2_list = d2.split("\t")
+d2_list.pop(0)
+
+if d2_list[-1].endswith("\n"):
+    d2_list[-1] = d2_list[-1][:-1]
+print(d2_list)
+
+alter_nums = d2_list.count('-2')
+print(alter_nums/len(d2_list) * 100)
+print(len(d2_list), len(d_list))
+print((round(not_nan_nums) + round(alter_nums))/(len(d2_list)) * 100)
+
 #pretty_json = json.loads(req2.text)
 #print(json.dumps(pretty_json, indent=2))
