@@ -18,9 +18,6 @@ url2 = 'http://www.cbioportal.org/webservice.do?'+\
 # Test Requests to see how output looks like
 
 req1 = requests.get(url1)
-print(req1.text)
-print(req1.encoding)
-
 
 d = req1.text
 split_txt1 = d.split("TP53", 1)[1]
@@ -91,27 +88,32 @@ def parse_genomic_data(gene, genetic_profile_id):
 
 
 def genomic_summarize(data):
-    if data[0] == 'mutation-data':
-        nan_nums = data[1].count('NaN') + data[1].count('0')
-        not_nan_nums = len(data[1]) - nan_nums
-        mutation_percent = round(not_nan_nums/len(data[1]) * 100)
+    """
+    [(tag, gene_data), (tag, gene_data)]
+    """
+    for i in range(len(data)):
+        if data[i][0] == 'mutation-data':
+            nan_nums = data[i][1].count('NaN') + data[i][1].count('0')
+            not_nan_nums = len(data[i][1]) - nan_nums
+            num_cases = len(data[i][1])
+            mutation_percent = round(not_nan_nums/num_cases * 100)
 
-        return mutation_percent
-    elif data[0] == 'copy-number-data':
-        alter_nums = data[1].count('-2')
-        not_available_data = data[1].count('NA')
-        tot = len(data[1]) - not_available_data
-        #ones_nums = data[1].count('1') + data[1].count('-1')
-        alter_percent = round(alter_nums/tot * 100)
+        elif data[i][0] == 'copy-number-data':
+            alter_nums = data[i][1].count('-2') + data[i][1].count('2')
+            not_available_data = data[i][1].count('NA')
+            tot = len(data[i][1]) - not_available_data
+            #ones_nums = data[1].count('1') + data[1].count('-1')
+            alter_percent = round(alter_nums/tot * 100)
 
-        return alter_percent
+    # Summarize data
+    tot_percent = round((not_nan_nums + alter_nums)/num_cases * 100)
+
+    # Return all three numbers
+    return tot_percent, mutation_percent, alter_percent
 
 
-#d = d.decode('ISO-8859-1').encode('utf8')
 
-#print(req1.content)
-#rawData = pd.read_csv(req1.text, encoding='ISO-8859-1', dtype=object)
-#rint(rawData)
+# Tests ############################################################
 req2 = requests.get(url2)
 #print(req2.text)
 d2 = req2.text
@@ -133,6 +135,15 @@ g1 = 'TP53'
 g2 = 'gbm_tcga_mutations'
 g3 = 'gbm_tcga_gistic'
 out = parse_genomic_data(g1,g3)
+out2 = parse_genomic_data(g1, g2)
 #print(out)
-out2 = genomic_summarize(out)
-print(out2)
+out3, out4, out5 = genomic_summarize([out, out2])
+print(out3, out4, out5)
+
+print('MDM4 \n')
+g4 = 'MDM4'
+out = parse_genomic_data(g4, g3)
+out2 = parse_genomic_data(g4, g2)
+print(out)
+out3, out4, out5 = genomic_summarize([out, out2])
+print(out3, out4, out5)
