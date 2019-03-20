@@ -67,7 +67,7 @@ def parse_genomic_data(gene, genetic_profile_id):
           '&id_type=gene_symbol&gene_list='+gene+'&case_set_id=gbm_tcga_cnaseq'
     # Send Request to Database
     req = requests.get(url)
-
+    # Grab data from request
     data = req.text
     # Get all information after the string that shows the Gene
     data = data.split(gene.upper(), 1)[1]
@@ -80,7 +80,31 @@ def parse_genomic_data(gene, genetic_profile_id):
         # Remove \n and update entry
         data_list[-1] = data_list[-1][:-1]
 
-    return data_list
+    # Return a tag for type of data
+    if genetic_profile_id == 'gbm_tcga_mutations':
+        tag = 'mutation-data'
+    elif genetic_profile_id == 'gbm_tcga_gistic':
+        tag = 'copy-number-data'
+
+    # Return data and type tag as a tuple
+    return (tag, data_list)
+
+
+def genomic_summarize(data):
+    if data[0] == 'mutation-data':
+        nan_nums = data[1].count('NaN') + data[1].count('0')
+        not_nan_nums = len(data[1]) - nan_nums
+        mutation_percent = round(not_nan_nums/len(data[1]) * 100)
+
+        return mutation_percent
+    elif data[0] == 'copy-number-data':
+        alter_nums = data[1].count('-2')
+        not_available_data = data[1].count('NA')
+        tot = len(data[1]) - not_available_data
+        #ones_nums = data[1].count('1') + data[1].count('-1')
+        alter_percent = round(alter_nums/tot * 100)
+
+        return alter_percent
 
 
 #d = d.decode('ISO-8859-1').encode('utf8')
@@ -100,11 +124,15 @@ if d2_list[-1].endswith("\n"):
 print(d2_list)
 
 alter_nums = d2_list.count('-2')
-print(alter_nums/len(d2_list) * 100)
+ignore_nums = d2_list.count('-1') + d2_list.count('1')
+print(alter_nums/(len(d2_list)) * 100)
 print(len(d2_list), len(d_list))
-print((round(not_nan_nums) + round(alter_nums))/(len(d2_list)) * 100)
+print(round((not_nan_nums + alter_nums)/(len(d2_list)) * 100))
 
 g1 = 'TP53'
 g2 = 'gbm_tcga_mutations'
-out = parse_genomic_data(g1,g2)
-print(out)
+g3 = 'gbm_tcga_gistic'
+out = parse_genomic_data(g1,g3)
+#print(out)
+out2 = genomic_summarize(out)
+print(out2)
