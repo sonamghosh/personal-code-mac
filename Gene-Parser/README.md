@@ -11,15 +11,6 @@ git clone https://github.com/sonamghosh/personal-code-mac/tree/master/Gene-Parse
 ```
 
 ## Usage
-
-```python
-import foobar
-
-foobar.pluralize('word') # returns 'words'
-foobar.pluralize('goose') # returns 'geese'
-foobar.singularize('phenomena') # returns 'phenomenon'
-```
-
 There are two ways of utilizing the code in this repo either by
 using the bash script with command line arguments or directly
 calling the python script with command line arguments.
