@@ -5,46 +5,6 @@ import argparse
 import re
 import itertools
 
-# Mutation Query
-url1 = 'http://www.cbioportal.org/webservice.do?'+\
-        'cmd=getProfileData&genetic_profile_id=gbm_tcga_mutations'+\
-        '&id_type=gene_symbol&gene_list=TP53&case_set_id=gbm_tcga_cnaseq'
-
-# Copy Number allterations for TP53
-url2 = 'http://www.cbioportal.org/webservice.do?'+\
-    'cmd=getProfileData&genetic_profile_id=gbm_tcga_gistic'+\
-    '&id_type=gene_symbol&gene_list=TP53&case_set_id=gbm_tcga_cnaseq'
-
-
-# Test Requests to see how output looks like
-
-req1 = requests.get(url1)
-
-d = req1.text
-split_txt1 = d.split("TP53", 1)[1]
-#print(split_txt1)
-#print(len(split_txt1))
-d_list = split_txt1.split("\t")
-d_list.pop(0)
-#print(d_list)
-if d_list[-1] == 'NaN\n':
-    print('yes')
-else:
-    print('no')
-
-for i in range(len(d_list)):
-    if d_list[i].endswith("\n"):
-        #print(i)
-        d_list[i] = d_list[i][:-1]
-
-#print(len(d_list))
-#print(d_list)
-nan_nums = d_list.count('NaN')
-not_nan_nums = len(d_list) - nan_nums
-#print(nan_nums)
-#print(not_nan_nums)
-#print(100 - nan_nums/len(d_list) * 100)
-
 
 def parse_genomic_data(gene, genetic_profile_id):
     """
@@ -105,7 +65,7 @@ def gene_profile_id_summarize(data):
             not_available_data = data[i][1].count('NA')
             tot = len(data[i][1]) - not_available_data
             #ones_nums = data[1].count('1') + data[1].count('-1')
-            cna_percent = round(alter_nums/tot * 100)
+            cna_percent = round(cna_nums/tot * 100)
 
     return mutation_percent, cna_percent
 
@@ -134,6 +94,43 @@ def genomic_alteration_summary(gene_arr):
 
     return tot_percent
 
+
+def main():
+    parser = argparse.ArgumentParser(description='TBA')
+    parser.add_argument('-g, --gene', type=str, nargs='+',
+                        required=True, help='foobar', dest='gene')
+    # Not sure if the bottom one will even be needed
+    parser.add_argument('-p, --profile_id', type=str,
+                        choices=['gbm_tcga_mutations', 'gbm_tcga_gistic'],
+                        help='foobar', dest='profile_id')
+
+    args = parser.parse_args()
+
+    # If gene argument only has one gene mentioned then execute
+    # profile_id summary method to find mutation percent,
+    # count number alteration and total alteration percentages
+    if len(args.gene) == 1:
+        # Grab Data
+        mut_data = parse_genomic_data(args.gene[0], 'gbm_tcga_mutations')
+        cna_data = parse_genomic_data(args.gene[0], 'gbm_tcga_gistic')
+        # Get mutation and cna alteration percentages
+        mut_percent, cna_percent = gene_profile_id_summarize([mut_data, cna_data])
+        # Convert data into Matrix
+        gene_mat = np.column_stack((mut_data[1], cna_data[1]))
+        # Get total percentage
+        tot_percent = genomic_alteration_summary(gene_mat)
+        # Print results
+        print(args.gene[0], 'is mutated in', mut_percent,'% of all cases.')
+        print(args.gene[0], 'is copy number altered in', cna_percent, '% of all cases.')
+        print('Total % of cases where', args.gene[0], 'is altered by either',
+              ' mutation or copy number alteration:', tot_percent, '% of all cases.')
+
+
+
+if __name__ == "__main__":
+    main()
+
+"""
 
 genes = ['TP53', 'MDM2', 'MDM4']
 mut = 'gbm_tcga_mutations'
@@ -180,5 +177,6 @@ print('Number of alterations in TP53 is ', cnt)
 print(cnt / 273 * 100, '%')
 
 # Test
-out = genomic_alteration_summary(gen_d)
-print(out)
+#out = genomic_alteration_summary(gen_d)
+#print(out)
+"""
