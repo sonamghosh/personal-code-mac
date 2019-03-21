@@ -88,35 +88,8 @@ def parse_genomic_data(gene, genetic_profile_id):
     # Return data and type tag as a tuple
     return (tag, data_list)
 
-def foobar1(data):
-    num_cases = len(data[1])
 
-    if data[0] == 'mutation-data':
-        nan_nums = data[1].count('NaN') + data[1].count('0')
-        mut_nums = len(data[1]) - nan_nums
-
-        return mut_nums, num_cases
-    elif data[0] == 'copy-number-data':
-        alter_nums = data[1].count('-2') + data[1].count('2')
-
-        return alter_nums, num_cases
-
-def foobar2(mut_nums, alter_nums, num_cases):
-    mutation_percent = round(mut_nums/num_cases * 100)
-    alter_percent = round(alter_nums/num_cases * 100)
-    tot_percent = round((mut_nums + alter_nums)/num_cases * 100)
-
-    return mutation_percent, alter_percent, tot_percent
-
-def foobar3(mut_nums_arr, alter_nums_arr, num_cases):
-    assert num_cases == 273
-    k = len(mut_nums_arr)
-    tot_muts = sum(mut_nums_arr)
-    tot_alter = sum(alter_nums_arr)
-
-    return round((tot_muts+tot_alter)/(1*num_cases) * 100)
-
-def genomic_summarize(data):
+def gene_profile_id_summarize(data):
     """
     [(tag, gene_data), (tag, gene_data)]
     """
@@ -128,90 +101,39 @@ def genomic_summarize(data):
             mutation_percent = round(not_nan_nums/num_cases * 100)
 
         elif data[i][0] == 'copy-number-data':
-            alter_nums = data[i][1].count('-2') + data[i][1].count('2')
+            cna_nums = data[i][1].count('-2') + data[i][1].count('2')
             not_available_data = data[i][1].count('NA')
             tot = len(data[i][1]) - not_available_data
             #ones_nums = data[1].count('1') + data[1].count('-1')
-            alter_percent = round(alter_nums/tot * 100)
+            cna_percent = round(alter_nums/tot * 100)
 
-    # Summarize data
-    tot_percent = round((not_nan_nums + alter_nums)/num_cases * 100)
+    return mutation_percent, cna_percent
 
-    # Return all three numbers
-    return tot_percent, mutation_percent, alter_percent
+def genomic_alteration_summary(gene_arr):
+    """
+    Does overall summary for single or multi gene
+    Write documentation later
 
-"""
+    """
+    # Get the dimensions of the array
+    r, c = gene_arr.shape
+    # Set a target array of values to look for
+    target = np.array(['NaN', '0', '-1', '1'])
+    # Initialize counter to count number of alterations
+    cnt = 0
+    # Iterate through every row
+    for i in range(r):
+        # Array to hold bool vals if target value is found
+        bool_arr = np.in1d(gene_arr[i, :], target)
+        # Iterate counter iff all values are not True
+        if np.count_nonzero(bool_arr) != c:
+            cnt += 1
 
-# Tests ############################################################
-req2 = requests.get(url2)
-##print(req2.text)
-d2 = req2.text
-d2 = d2.split('TP53', 1)[1]
-d2_list = d2.split("\t")
-d2_list.pop(0)
+    # Divide by number of samples (corresponds to num of rows)
+    tot_percent = round(cnt/r * 100)
 
-if d2_list[-1].endswith("\n"):
-    d2_list[-1] = d2_list[-1][:-1]
-#print(d2_list)
+    return tot_percent
 
-alter_nums = d2_list.count('-2')
-ignore_nums = d2_list.count('-1') + d2_list.count('1')
-#print(alter_nums/(len(d2_list)) * 100)
-#print(len(d2_list), len(d_list))
-#print(round((not_nan_nums + alter_nums)/(len(d2_list)) * 100))
-
-g1 = 'TP53'
-g2 = 'gbm_tcga_mutations'
-g3 = 'gbm_tcga_gistic'
-out = parse_genomic_data(g1,g3)
-out2 = parse_genomic_data(g1, g2)
-##print(out)
-out3, out4, out5 = genomic_summarize([out, out2])
-#print(out3, out4, out5)
-
-#print('MDM2 \n')
-g4 = 'MDM2'
-out = parse_genomic_data(g4, g3)
-out2 = parse_genomic_data(g4, g2)
-#print(out)
-out3, out4, out5 = genomic_summarize([out, out2])
-#print(out3, out4, out5)
-
-#print(len(out[1]))
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# big Test
-genes = ['TP53', 'MDM2', 'MDM4']
-mut = 'gbm_tcga_mutations'
-copy_alt = 'gbm_tcga_gistic'
-
-tp53_d1 = parse_genomic_data(genes[0], mut)
-tp53_d2 = parse_genomic_data(genes[0], copy_alt)
-mdm2_d1 = parse_genomic_data(genes[1], mut)
-mdm2_d2 = parse_genomic_data(genes[1], copy_alt)
-mdm4_d1 = parse_genomic_data(genes[2], mut)
-mdm4_d2 = parse_genomic_data(genes[2], copy_alt)
-
-tp53_mut_nums, num_cases = foobar1(tp53_d1)
-tp53_copy_nums, num_cases = foobar1(tp53_d2)
-mdm2_mut_nums, num_cases = foobar1(mdm2_d1)
-mdm2_copy_nums, num_cases = foobar1(mdm2_d2)
-mdm4_mut_nums, num_cases = foobar1(mdm4_d1)
-mdm4_copy_nums, num_cases = foobar1(mdm4_d2)
-
-mut_lst = [tp53_mut_nums, mdm2_mut_nums, mdm4_mut_nums]
-copy_lst = [tp53_copy_nums, mdm2_copy_nums, mdm4_copy_nums]
-
-out = foobar3(mut_lst, copy_lst, num_cases)
-#print(out, ' %')
-
-
-##print(mut_lst)
-##print(tp53_d1)
-##print(len(tp53_d1[1]))
-##print(len(mdm2_d1[1]))
-
-"""
 
 genes = ['TP53', 'MDM2', 'MDM4']
 mut = 'gbm_tcga_mutations'
@@ -256,3 +178,7 @@ for i in range(r):
 
 print('Number of alterations in TP53 is ', cnt)
 print(cnt / 273 * 100, '%')
+
+# Test
+out = genomic_alteration_summary(gen_d)
+print(out)
