@@ -1,9 +1,7 @@
 import requests
 import numpy as np
-import json
 import argparse
 import re
-import itertools
 
 
 def parse_genomic_data(gene, genetic_profile_id):
@@ -97,8 +95,8 @@ def genomic_alteration_summary(gene_arr):
 
 def main():
     parser = argparse.ArgumentParser(description='TBA')
-    parser.add_argument('-g, --gene', type=str, nargs='+',
-                        required=True, help='foobar', dest='gene')
+    parser.add_argument('-g, --genes', type=str, nargs='+',
+                        required=True, help='foobar', dest='genes')
     # Not sure if the bottom one will even be needed
     parser.add_argument('-p, --profile_id', type=str,
                         choices=['gbm_tcga_mutations', 'gbm_tcga_gistic'],
@@ -109,10 +107,10 @@ def main():
     # If gene argument only has one gene mentioned then execute
     # profile_id summary method to find mutation percent,
     # count number alteration and total alteration percentages
-    if len(args.gene) == 1:
+    if len(args.genes) == 1:
         # Grab Data
-        mut_data = parse_genomic_data(args.gene[0], 'gbm_tcga_mutations')
-        cna_data = parse_genomic_data(args.gene[0], 'gbm_tcga_gistic')
+        mut_data = parse_genomic_data(args.genes[0], 'gbm_tcga_mutations')
+        cna_data = parse_genomic_data(args.genes[0], 'gbm_tcga_gistic')
         # Get mutation and cna alteration percentages
         mut_percent, cna_percent = gene_profile_id_summarize([mut_data, cna_data])
         # Convert data into Matrix
@@ -120,63 +118,30 @@ def main():
         # Get total percentage
         tot_percent = genomic_alteration_summary(gene_mat)
         # Print results
-        print(args.gene[0], 'is mutated in', mut_percent,'% of all cases.')
-        print(args.gene[0], 'is copy number altered in', cna_percent, '% of all cases.')
-        print('Total % of cases where', args.gene[0], 'is altered by either',
+        print(args.genes[0], 'is mutated in', mut_percent,'% of all cases.')
+        print(args.genes[0], 'is copy number altered in', cna_percent, '% of all cases.')
+        print('Total % of cases where', args.genes[0], 'is altered by either',
               ' mutation or copy number alteration:', tot_percent, '% of all cases.')
+    else:
+        # Init empty lists to hold multiple mutation and cna data lists
+        mut_list, cna_list = [], []
+        gene_list = []
+        # Iterate through gene argument list and append to lists above
+        for gene in args.genes:
+            mut_data = parse_genomic_data(gene, 'gbm_tcga_mutations')
+            cna_data = parse_genomic_data(gene, 'gbm_tcga_gistic')
+            gene_list.append(mut_data[1])
+            gene_list.append(cna_data[1])
+            sub_gene_mat = np.column_stack((mut_data[1], cna_data[1]))
+            sub_tot_percent = genomic_alteration_summary(sub_gene_mat)
+            print(gene, 'is altered in', sub_tot_percent, '% of cases.')
+        gene_mat = np.column_stack(tuple(gene_list))
+
+        tot_percent = genomic_alteration_summary(gene_mat)
+        print('The gene set is altered in', tot_percent, '% of all cases')
+
 
 
 
 if __name__ == "__main__":
     main()
-
-"""
-
-genes = ['TP53', 'MDM2', 'MDM4']
-mut = 'gbm_tcga_mutations'
-copy_alt = 'gbm_tcga_gistic'
-
-tp53_mut = parse_genomic_data(genes[0], mut)
-tp53_cn = parse_genomic_data(genes[0], copy_alt)
-mdm2_mut = parse_genomic_data(genes[1], mut)
-mdm2_cn = parse_genomic_data(genes[1], copy_alt)
-mdm4_mut = parse_genomic_data(genes[2], mut)
-mdm4_cn = parse_genomic_data(genes[2], copy_alt)
-
-
-# Turn into 273 by 6 Matrix
-gen_d = np.column_stack((tp53_mut[1], tp53_cn[1],
-                         mdm2_mut[1], mdm2_cn[1],
-                         mdm4_mut[1], mdm4_cn[1]))
-
-
-
-print(gen_d.shape)
-
-cnt = 0
-r, c = gen_d.shape
-target = np.array(['NaN', '0', '-1', '1'])
-for i in range(r):
-    #bool_arr = (target[:, None] == gen_d[i, :]).any(axis=-1)
-    bool_arr = np.in1d(gen_d[i, :], target)
-    print('Row ', i, ' ', bool_arr)
-    if np.count_nonzero(bool_arr) != c:
-        cnt += 1
-
-print('Number of genes altered out of 273 is ', cnt)
-
-cnt = 0
-tp53_d = np.column_stack((tp53_mut[1], tp53_cn[1]))
-r, c = tp53_d.shape
-for i in range(r):
-    bool_arr = np.in1d(tp53_d[i, :], target)
-    if np.count_nonzero(bool_arr) != c:
-        cnt += 1
-
-print('Number of alterations in TP53 is ', cnt)
-print(cnt / 273 * 100, '%')
-
-# Test
-#out = genomic_alteration_summary(gen_d)
-#print(out)
-"""
